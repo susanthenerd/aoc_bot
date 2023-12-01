@@ -9,5 +9,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="nostrum" level="project" />
+    <orderEntry type="library" name="jason" level="project" />
+    <orderEntry type="library" name="httpoison" level="project" />
   </component>
 </module>
