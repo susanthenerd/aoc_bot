@@ -24,3 +24,6 @@ aoc_bot-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Config file
+/config/config.exs

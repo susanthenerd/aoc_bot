@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="kcl" type="mix">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/kcl/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/kcl/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/kcl/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/kcl/ebin" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/kcl/lib" />
+      <root url="file://$PROJECT_DIR$/deps/kcl/lib" />
+      <root url="file://$PROJECT_DIR$/deps/kcl/lib" />
+    </SOURCES>
+  </library>
+</component>

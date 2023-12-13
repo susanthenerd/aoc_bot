@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="salsa20" type="mix">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/salsa20/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/salsa20/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/salsa20/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/salsa20/ebin" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/salsa20/lib" />
+      <root url="file://$PROJECT_DIR$/deps/salsa20/lib" />
+      <root url="file://$PROJECT_DIR$/deps/salsa20/lib" />
+    </SOURCES>
+  </library>
+</component>
