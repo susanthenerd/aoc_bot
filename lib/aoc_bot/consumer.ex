@@ -17,9 +17,6 @@ defmodule AocBot.Consumer do
       ["=help" | _rest] ->
         AocBot.Commands.Help.run(msg)
 
-      ["=todaytest" | _rest] ->
-        AocBot.TodayPing.send_today_ping()
-
       _ ->
         :ignore
     end
