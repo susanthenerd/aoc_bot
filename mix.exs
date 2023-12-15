@@ -11,7 +11,6 @@ defmodule AocBot.MixProject do
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       extra_applications: [:logger],
@@ -19,13 +18,13 @@ defmodule AocBot.MixProject do
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:nostrum, "~> 0.8.0"},
       {:jason, "~> 1.4"},
       {:httpoison, "~> 2.2"},
-      {:table_rex, "~> 4.0.0"}
+      {:table_rex, "~> 4.0.0"},
+      {:quantum, "~> 3.5"}
     ]
   end
 end

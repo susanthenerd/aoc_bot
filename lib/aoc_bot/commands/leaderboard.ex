@@ -48,8 +48,8 @@ defmodule AocBot.Commands.Leaderboard do
     Api.create_message(msg.channel_id, embeds: [embed])
   end
 
-  defp get_members(start) do
-    AocBot.Fetcher.get_data()["members"]
+  defp get_members(data, start) do
+    data
     |> Enum.sort_by(fn {_, member} -> member["local_score"] end, &>=/2)
     |> Enum.map(&format/1)
     |> (fn list ->
@@ -61,8 +61,11 @@ defmodule AocBot.Commands.Leaderboard do
         end).()
   end
 
-  defp get_leaderboard(start) do
-    members = get_members(start)
+  def get_leaderboard(start) do
+    data = AocBot.Fetcher.get_data()
+    Logger.debug(inspect(data))
+
+    members = get_members(data["members"], start)
 
     table =
       Table.new(members, @header)
@@ -78,7 +81,10 @@ defmodule AocBot.Commands.Leaderboard do
       |> put_color(0x009900)
       |> put_description("```ansi
 #{Table.render!(table, horizontal_style: :header, vertical_style: :off, header_separator_symbol: "=", bottom_frame_symbol: "", top_frame_symbol: "")}
-```")
+```
+Data fetched <t:#{AocBot.Fetcher.get_last_fetch_time() |> DateTime.to_unix()}:R>.
+Showing #{start} - #{start + 19} out of #{Enum.count(data["members"])}\n
+")
 
     embed
   end

@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="telemetry_registry" type="mix">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/telemetry_registry/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/telemetry_registry/ebin" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/telemetry_registry/lib" />
+      <root url="file://$PROJECT_DIR$/deps/telemetry_registry/src" />
+      <root url="file://$PROJECT_DIR$/deps/telemetry_registry/lib" />
+      <root url="file://$PROJECT_DIR$/deps/telemetry_registry/src" />
+    </SOURCES>
+  </library>
+</component>

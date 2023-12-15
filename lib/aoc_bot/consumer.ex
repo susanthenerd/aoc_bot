@@ -3,6 +3,7 @@ defmodule AocBot.Consumer do
   use Nostrum.Consumer
 
   alias Nostrum.Api
+
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
     Logger.debug(msg)
 
@@ -15,6 +16,9 @@ defmodule AocBot.Consumer do
 
       ["=help" | _rest] ->
         AocBot.Commands.Help.run(msg)
+
+      ["=todaytest" | _rest] ->
+        AocBot.TodayPing.send_today_ping()
 
       _ ->
         :ignore

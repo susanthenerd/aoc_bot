@@ -27,6 +27,11 @@
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/table_rex" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/unicode_util_compat" />
       <excludeFolder url="file://$MODULE_DIR$/deps" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/crontab" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/gen_stage" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/quantum" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/telemetry" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/telemetry_registry" />
     </content>
     <orderEntry type="jdk" jdkName="Elixir 1.15.7-otp-26" jdkType="Elixir SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -55,5 +60,13 @@
     <orderEntry type="library" name="equivalex" level="project" />
     <orderEntry type="library" name="table_rex" level="project" />
     <orderEntry type="library" name="unicode" level="project" />
+    <orderEntry type="library" name="quantum" level="project" />
+    <orderEntry type="library" name="crontab" level="project" />
+    <orderEntry type="library" name="gen_stage" level="project" />
+    <orderEntry type="library" name="telemetry" level="project" />
+    <orderEntry type="library" name="tzdata" level="project" />
+    <orderEntry type="library" name="excoveralls" level="project" />
+    <orderEntry type="library" name="telemetry_registry" level="project" />
+    <orderEntry type="library" name="ecto" level="project" />
   </component>
 </module>

@@ -4,7 +4,8 @@ defmodule AocBot.Application do
   def start(_type, _args) do
     children = [
       AocBot.Consumer,
-      AocBot.Fetcher
+      AocBot.Fetcher,
+      AocBot.Scheduler
     ]
 
     opts = [strategy: :one_for_one, name: AocBot.Supervisor]
