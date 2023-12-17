@@ -1,5 +1,5 @@
 # Use the official Elixir image as a parent image
-FROM elixir:1.15
+FROM elixir:lastest
 
 # Set the working directory in the container
 WORKDIR /app

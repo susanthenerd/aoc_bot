@@ -63,7 +63,7 @@ defmodule AocBot.Commands.Leaderboard do
 
   def get_leaderboard(start) do
     data = AocBot.Fetcher.get_data()
-    Logger.debug(inspect(data))
+    Logger.debug(data)
 
     members = get_members(data["members"], start)
 
@@ -82,8 +82,9 @@ defmodule AocBot.Commands.Leaderboard do
       |> put_description("```ansi
 #{Table.render!(table, horizontal_style: :header, vertical_style: :off, header_separator_symbol: "=", bottom_frame_symbol: "", top_frame_symbol: "")}
 ```
-Data fetched <t:#{AocBot.Fetcher.get_last_fetch_time() |> DateTime.to_unix()}:R>.
-Showing #{start} - #{start + 19} out of #{Enum.count(data["members"])}\n
+Date luate la <t:#{AocBot.Fetcher.get_last_fetch_time() |> DateTime.to_unix()}:R>.
+#{start} - #{start + 19} din #{Enum.count(data["members"])}\n
+Bug? Da ping la <@1010557796971978803>
 ")
 
     embed

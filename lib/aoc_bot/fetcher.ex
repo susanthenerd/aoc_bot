@@ -7,7 +7,7 @@ defmodule AocBot.Fetcher do
   use GenServer
   require Logger
 
-  @interval 900
+  @interval 120
 
   defstruct data: %{}, last_fetch: DateTime.utc_now(), auto_fetch: false
 
@@ -74,7 +74,11 @@ defmodule AocBot.Fetcher do
   def handle_info(:fetch, state), do: {:noreply, fetch(state)}
   def handle_info(:auto_fetch, state), do: {:noreply, handle_auto_fetch(state)}
 
-  def handle_call(:get_data, _from, state), do: {:reply, state.data, fetch(state)}
+  def handle_call(:get_data, _from, state) do
+    new_state = fetch(state)
+    {:reply, new_state.data, new_state}
+  end
+
   def handle_call(:enable_auto_fetch, _from, state), do: {:reply, :ok, enable_auto_fetch(state)}
 
   def handle_call(:disable_auto_fetch, _from, state),
@@ -94,7 +98,7 @@ defmodule AocBot.Fetcher do
 
   defp perform_fetch(state) do
     with {:ok, data} <- fetch_data() do
-      Logger.info("Fetched data: #{inspect(data)}")
+      Logger.debug(data)
       %{state | data: data, last_fetch: DateTime.utc_now()}
     else
       _ -> schedule_fetch(state)
@@ -130,6 +134,7 @@ defmodule AocBot.Fetcher do
 
     case HTTPoison.get(url, headers) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        Logger.debug(body)
         Jason.decode(body)
 
       {:error, %HTTPoison.Error{reason: reason}} ->
