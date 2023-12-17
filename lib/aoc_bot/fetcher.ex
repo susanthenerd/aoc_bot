@@ -7,7 +7,7 @@ defmodule AocBot.Fetcher do
   use GenServer
   require Logger
 
-  @interval 120
+  @interval 900
 
   defstruct data: %{}, last_fetch: DateTime.utc_now(), auto_fetch: false
 
