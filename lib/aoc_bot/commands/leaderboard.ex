@@ -4,20 +4,38 @@ defmodule AocBot.Commands.Leaderboard do
   alias TableRex.Table
   require Logger
 
-  @header ["Scr.", "Name", "★★"]
+  @header ["Score 🎁", "Name 🎅", "🌟"]
 
   defp get_name(member) do
     case member["name"] do
-      name when is_nil(name) ->
-        "(anonymous ##{member["id"]})"
-
-      name ->
-        name
+      name when is_nil(name) -> "(elf ##{member["id"]})"
+      name -> name
     end
   end
 
-  defp format({_id, member}) do
-    ["#{member["local_score"]}", get_name(member), member["stars"]]
+  defp format({_id, member}, rank) do
+    score = member["local_score"]
+
+    emoji =
+      case rank do
+        1 ->
+          "🥇"
+
+        2 ->
+          "🥈"
+
+        3 ->
+          "🥉"
+
+        _ ->
+          case score do
+            score when score > 1800 -> "🎄"
+            score when score > 1500 -> "⛄"
+            _ -> "🍪"
+          end
+      end
+
+    ["#{score} #{emoji}", get_name(member), member["stars"]]
   end
 
   defp extract_number(number_list) do
@@ -43,15 +61,16 @@ defmodule AocBot.Commands.Leaderboard do
     end
   end
 
-  def run(msg, extra) do
-    embed = extract_number(extra) |> get_leaderboard()
+  def run(msg, _extra) do
+    embed = get_leaderboard(0)
     Api.create_message(msg.channel_id, embeds: [embed])
   end
 
   defp get_members(data, start) do
     data
     |> Enum.sort_by(fn {_, member} -> member["local_score"] end, &>=/2)
-    |> Enum.map(&format/1)
+    |> Enum.with_index(1)
+    |> Enum.map(fn {{id, member}, rank} -> format({id, member}, rank) end)
     |> (fn list ->
           if Enum.count(list) > start do
             Enum.slice(list, start, 20)
@@ -69,10 +88,10 @@ defmodule AocBot.Commands.Leaderboard do
 
     table =
       Table.new(members, @header)
-      |> Table.put_column_meta(2, color: :yellow, align: :right)
+      |> Table.put_column_meta(2, color: :green, align: :right)
       |> Table.put_column_meta(0, color: :red, align: :right)
-      |> Table.put_header_meta(0..2, color: :blue, padding: 0)
-      |> Table.put_column_meta(0..2, padding: 0)
+      |> Table.put_header_meta(0..2, color: :yellow)
+      |> Table.put_header_meta(2, align: :left)
 
     embed =
       %Nostrum.Struct.Embed{}
@@ -80,12 +99,14 @@ defmodule AocBot.Commands.Leaderboard do
       |> put_url("https://adventofcode.com/2023/leaderboard/private/view/1064509")
       |> put_color(0x009900)
       |> put_description("```ansi
-#{Table.render!(table, horizontal_style: :header, vertical_style: :off, header_separator_symbol: "=", bottom_frame_symbol: "", top_frame_symbol: "")}
+#{Table.render!(table, horizontal_style: :header, vertical_style: :off, header_separator_symbol: "=", bottom_frame_symbol: "", top_frame_symbol: "", intersection_symbol: "", vertical_symbol: "")}
 ```
-Date luate la <t:#{AocBot.Fetcher.get_last_fetch_time() |> DateTime.to_unix()}:R>.
-#{start} - #{start + 19} din #{Enum.count(data["members"])}\n
-Bug? Da ping la <@1010557796971978803>
+**Random Message:**
+> #{AocBot.Commands.RandomMessage.get_random_message()}
+
+PS: #{AocBot.Commands.Countdown.days_until_christmas()}
 ")
+      |> put_timestamp(AocBot.Fetcher.get_last_fetch_time())
 
     embed
   end

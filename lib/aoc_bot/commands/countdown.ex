@@ -1,6 +1,6 @@
 defmodule AocBot.Commands.Countdown do
   alias Nostrum.Api
-  alias Nostrum.Struct.Embed
+  import Nostrum.Struct.Embed
 
   def days_until_christmas do
     today = Date.utc_today()
@@ -49,8 +49,9 @@ defmodule AocBot.Commands.Countdown do
 
   def run(msg) do
     embed =
-      %Embed{}
+      %Nostrum.Struct.Embed{}
       |> put_title("Christmas Countdown")
+      |> put_color(0x009900)
       |> put_description("#{days_until_christmas()}")
 
     Api.create_message(msg.channel_id, embed: embed)

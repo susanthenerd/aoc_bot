@@ -26,11 +26,6 @@ defmodule AocBot.TodayPing do
     title
   end
 
-  @doc """
-  Sends a message to the Discord channel with the current day's AoC challenge and the final leaderboard.
-
-  Utilizes the Discord API to create messages with embedded content.
-  """
   @spec send_today_ping :: :ok
   def send_today_ping do
     today = Date.utc_today()
@@ -40,16 +35,31 @@ defmodule AocBot.TodayPing do
     channel_id = Application.get_env(:aoc_bot, :channel_id)
     role_id = Application.get_env(:aoc_bot, :role_id)
 
-    # Fetch the leaderboard data
-    _embed_leaderboard =
-      AocBot.Commands.Leaderboard.get_leaderboard(0)
-      |> put_title("The final leaderboard for yesterday is here!")
+    # Define a colorful and fun embed for the challenge announcement
+    # Initialize a new Embed struct
+    challenge_embed =
+      %Nostrum.Struct.Embed{}
+      |> put_title("Today's Advent of Code Challenge! 🚀")
+      |> put_description("""
+      Good morning, Code Wizards! Today's challenge is ready for you.
 
-    # Api.create_message(channel_id, embeds: [embed_leaderboard])
+      Challenge Title: **[#{challenge_title}](#{url})**
+
+      And here's a Christmas tree to get you in the spirit:
+
+      ```ansi
+      #{AocBot.Commands.ChristmasTree.generate(15)}
+      ```
+      **Random Message of the Day:**
+      > #{AocBot.Commands.RandomMessage.get_random_message()}
+
+      PS: #{AocBot.Commands.Countdown.days_until_christmas()}
+      """)
+      |> put_color(0x009900)
 
     Api.create_message(channel_id,
-      content: "Trezirea <@&#{role_id}>!\n
-      Problema de azi este [#{challenge_title}](#{url})"
+      content: "<@&#{role_id}>",
+      embed: challenge_embed
     )
   end
 end

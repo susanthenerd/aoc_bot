@@ -24,7 +24,8 @@ defmodule AocBot.MixProject do
       {:jason, "~> 1.4"},
       {:httpoison, "~> 2.2"},
       {:table_rex, "~> 4.0.0"},
-      {:quantum, "~> 3.5"}
+      {:quantum, "~> 3.5"},
+      {:timex, "~> 3.7"}
     ]
   end
 end
