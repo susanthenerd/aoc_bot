@@ -8,19 +8,22 @@ defmodule AocBot.Consumer do
     Logger.debug(msg)
 
     case String.split(msg.content) do
-      ["=ldr" | extra] ->
+      [";ldr" | extra] ->
         AocBot.Commands.Leaderboard.run(msg, extra)
 
-      ["=tree" | _rest] ->
+      [";tree" | _rest] ->
         AocBot.Commands.ChristmasTree.run(msg)
 
-      ["=countdown" | _rest] ->
+      [";countdown" | _rest] ->
         AocBot.Commands.Countdown.run(msg)
 
-      ["=random" | _rest] ->
+      [";random" | _rest] ->
         AocBot.Commands.RandomMessage.run(msg)
 
-      ["=help" | _rest] ->
+      [";today" | _rest] ->
+        AocBot.TodayPing.send_today_ping()
+
+      [";help" | _rest] ->
         AocBot.Commands.Help.run(msg)
 
       _ ->
