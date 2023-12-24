@@ -11,19 +11,19 @@ defmodule AocBot.Consumer do
       [";ldr" | extra] ->
         AocBot.Commands.Leaderboard.run(msg, extra)
 
-      [";tree" | _rest] ->
+      ["=tree" | _rest] ->
         AocBot.Commands.ChristmasTree.run(msg)
 
-      [";countdown" | _rest] ->
+      ["=countdown" | _rest] ->
         AocBot.Commands.Countdown.run(msg)
 
-      [";random" | _rest] ->
+      ["=random" | _rest] ->
         AocBot.Commands.RandomMessage.run(msg)
 
-      [";today" | _rest] ->
-        AocBot.TodayPing.send_today_ping()
+      # [";today" | _rest] ->
+      #  AocBot.TodayPing.send_today_ping()
 
-      [";help" | _rest] ->
+      ["=help" | _rest] ->
         AocBot.Commands.Help.run(msg)
 
       _ ->
