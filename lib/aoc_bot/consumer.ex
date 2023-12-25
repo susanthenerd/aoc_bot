@@ -5,8 +5,6 @@ defmodule AocBot.Consumer do
   alias Nostrum.Api
 
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
-    Logger.debug(msg)
-
     case String.split(msg.content) do
       ["=ldr" | extra] ->
         AocBot.Commands.Leaderboard.run(msg, extra)
@@ -20,11 +18,11 @@ defmodule AocBot.Consumer do
       ["=random" | _rest] ->
         AocBot.Commands.RandomMessage.run(msg)
 
-      # [";today" | _rest] ->
-      #  AocBot.TodayPing.send_today_ping()
-
       ["=help" | _rest] ->
         AocBot.Commands.Help.run(msg)
+
+      ["=ping" | _rest] ->
+        Api.create_message(msg.channel_id, content: "Pong! 🏓")
 
       _ ->
         :ignore

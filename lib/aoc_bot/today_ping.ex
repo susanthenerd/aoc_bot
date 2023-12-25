@@ -2,87 +2,69 @@ defmodule AocBot.TodayPing do
   import Nostrum.Struct.Embed
   alias Nostrum.Api
   alias AocBot.Commands
+  require Logger
 
   @moduledoc """
-  AocBot.TodayPing is responsible for interacting with the Advent of Code website to fetch the daily challenge title and send notifications to a specified Discord channel.
+  Responsible for fetching the daily Advent of Code challenge title and sending notifications to a specified Discord channel.
   """
 
-  # Utility functions for dates and URLs
-  defp today(), do: Date.utc_today()
-  defp is_december?(%Date{month: 12}), do: true
-  defp is_december?(_), do: false
+  def send_today_ping do
+    with {:ok, %Date{month: 12, day: day} = today} <- Date.utc_today(),
+         {:ok, challenge_title} <- fetch_challenge_title(today) do
+      send_ping_message(challenge_title, today)
+    else
+      _ -> Logger.info("Not December or out of date range, skipping today ping")
+    end
+  end
 
-  # Fetching challenge title
-  defp fetch_challenge_title do
-    case HTTPoison.get(challenge_url()) do
+  defp fetch_challenge_title(today) do
+    case HTTPoison.get(challenge_url(today)) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        extract_challenge_title(body)
+        {:ok, extract_challenge_title(body)}
 
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, reason}
     end
   end
 
-  defp challenge_url do
-    today = today()
-    "https://adventofcode.com/#{today.year}/day/#{today.day}"
-  end
+  defp challenge_url(%Date{year: year, day: day}),
+    do: "https://adventofcode.com/#{year}/day/#{day}"
 
-  defp extract_challenge_title(html) do
-    [_, title | _] = Regex.run(~r/<h2>(.*?)<\/h2>/, html)
-    title
-  end
+  defp extract_challenge_title(html),
+    do: Regex.run(~r/<h2>(.*?)<\/h2>/, html) |> List.second()
 
-  # Sending the ping
-  def send_today_ping do
-    today = today()
-
-    case {is_december?(today), today.day} do
-      {true, day} when day in 1..25 ->
-        challenge_title = fetch_challenge_title()
-        send_ping_message(challenge_title, today)
-
-      _ ->
-        Logger.info("Not December or out of date range, skipping today ping")
-    end
-  end
-
-  defp send_ping_message(challenge_title, %Date{day: 25} = _today) do
+  defp send_ping_message(challenge_title, %Date{day: 25} = today) do
     send_message(
       "Merry Christmas! The last challenge of the year is here 🚀",
       challenge_title,
-      true
+      today
     )
   end
 
-  defp send_ping_message(challenge_title, _today) do
-    send_message("Today's Advent of Code Challenge! 🚀", challenge_title, false)
+  defp send_ping_message(challenge_title, today) do
+    send_message("Today's Advent of Code Challenge! 🚀", challenge_title, today)
   end
 
-  # Creating and sending the actual message
-  defp send_message(title, challenge_title, is_christmas) do
+  defp send_message(title, challenge_title, today) do
     channel_id = Application.get_env(:aoc_bot, :channel_id)
     role_id = Application.get_env(:aoc_bot, :role_id)
-    url = challenge_url()
+    url = challenge_url(today)
 
-    challenge_embed =
-      build_embed(title, challenge_title, url, is_christmas)
+    challenge_embed = build_embed(title, challenge_title, url, today)
 
     Api.create_message(channel_id, content: "<@&#{role_id}>", embed: challenge_embed)
   end
 
-  # Constructing the embed message
-  defp build_embed(title, challenge_title, url, is_christmas) do
-    base_embed =
-      %Nostrum.Struct.Embed{}
-      |> put_title(title)
-      |> put_description(description(challenge_title, url, is_christmas))
-      |> put_color(0x009900)
+  defp build_embed(title, challenge_title, url, today) do
+    embed_color = 0x009900
 
-    base_embed
+    %Nostrum.Struct.Embed{}
+    |> put_title(title)
+    |> put_description(description(challenge_title, url, today))
+    |> put_color(embed_color)
   end
 
-  defp description(challenge_title, url, true) do
+  defp description(challenge_title, url, %Date{day: 25}) do
     """
     🎄 Merry Christmas, Code Wizards! 🎄
 
@@ -104,7 +86,7 @@ defmodule AocBot.TodayPing do
     """
   end
 
-  defp description(challenge_title, url, false) do
+  defp description(challenge_title, url, _) do
     """
     Good morning, Code Wizards! Today's challenge is ready for you.
 

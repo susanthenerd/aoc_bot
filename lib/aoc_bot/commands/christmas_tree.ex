@@ -52,8 +52,6 @@ defmodule AocBot.Commands.ChristmasTree do
   end
 
   def run(msg) do
-    height = 15
-
     embed = embed()
 
     Api.create_message(msg.channel_id, embeds: [embed])

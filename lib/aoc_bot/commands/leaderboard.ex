@@ -38,29 +38,6 @@ defmodule AocBot.Commands.Leaderboard do
     ["#{score} #{emoji}", get_name(member), member["stars"]]
   end
 
-  defp extract_number(number_list) do
-    case number_list do
-      [] ->
-        0
-
-      [number_str] ->
-        parse_single_element(number_str)
-
-      _ ->
-        0
-    end
-  end
-
-  defp parse_single_element(element) do
-    case Integer.parse(element) do
-      {number, ""} ->
-        number
-
-      _ ->
-        0
-    end
-  end
-
   def run(msg, _extra) do
     embed = get_leaderboard(0)
     Api.create_message(msg.channel_id, embeds: [embed])
