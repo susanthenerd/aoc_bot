@@ -8,7 +8,7 @@ defmodule AocBot.Consumer do
     Logger.debug(msg)
 
     case String.split(msg.content) do
-      [";ldr" | extra] ->
+      ["=ldr" | extra] ->
         AocBot.Commands.Leaderboard.run(msg, extra)
 
       ["=tree" | _rest] ->
