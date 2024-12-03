@@ -127,7 +127,7 @@ defmodule AocBot.Fetcher do
   end
 
   defp fetch_data do
-    url = Application.get_env(:aoc_bot, :url)
+    url = Application.get_env(:aoc_bot, :url) <> ".json"
     cookie = Application.get_env(:aoc_bot, :cookie)
 
     headers = %{"Cookie" => "session=#{cookie}"}

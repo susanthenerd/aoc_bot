@@ -14,9 +14,7 @@ defmodule AocBot.Commands.Help do
 `=countdown` - Show the number of days until Christmas
 `=random` - Show a random message
 `=help` - Show this help message
-
-Made with ❤️ by <@!#{1010557796971978803}>. Find the source code at
-https://github.com/susanthenerd/aoc_bot
+`=today` - Today's Advent of Code challenge
 
 ")
     Api.create_message(message.channel_id, embeds: [embed])

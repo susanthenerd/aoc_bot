@@ -70,21 +70,18 @@ defmodule AocBot.Commands.Leaderboard do
       |> Table.put_header_meta(0..2, color: :yellow)
       |> Table.put_header_meta(2, align: :left)
 
-    embed =
-      %Nostrum.Struct.Embed{}
-      |> put_title("Leaderboard")
-      |> put_url("https://adventofcode.com/2023/leaderboard/private/view/1064509")
-      |> put_color(0x009900)
-      |> put_description("```ansi
+    %Nostrum.Struct.Embed{}
+    |> put_title("Leaderboard")
+    |> put_url(Application.get_env(:aoc_bot, :url))
+    |> put_color(0x009900)
+    |> put_description("```ansi
 #{Table.render!(table, horizontal_style: :header, vertical_style: :off, header_separator_symbol: "=", bottom_frame_symbol: "", top_frame_symbol: "", intersection_symbol: "", vertical_symbol: "")}
 ```
 **Random Message:**
 > #{AocBot.Commands.RandomMessage.get_random_message()}
 
-PS: #{AocBot.Commands.Countdown.days_until_christmas()}
+PS: #{AocBot.Commands.Countdown.days_until()}
 ")
-      |> put_timestamp(AocBot.Fetcher.get_last_fetch_time())
-
-    embed
+    |> put_timestamp(AocBot.Fetcher.get_last_fetch_time())
   end
 end
