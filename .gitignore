@@ -25,6 +25,17 @@ aoc_bot-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 
-# Config file
+# Environment variables (secrets)
+.env
+.env.local
 
-/config/config.exs
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml

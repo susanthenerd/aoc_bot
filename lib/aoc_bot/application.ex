@@ -3,6 +3,7 @@ defmodule AocBot.Application do
 
   def start(_type, _args) do
     children = [
+      AocBot.Repo,
       AocBot.Consumer,
       AocBot.Fetcher,
       AocBot.Scheduler

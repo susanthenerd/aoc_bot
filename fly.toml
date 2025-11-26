@@ -7,16 +7,16 @@ app = 'aoc-bot'
 primary_region = 'arn'
 
 [build]
+  image = "registry.fly.io/aoc-bot:latest"
 
-[http_service]
-  internal_port = 8080
-  force_https = true
-  auto_stop_machines = 'off'
-  auto_start_machines = true
-  min_machines_running = 0
-  processes = ['app']
+# This is a background worker (Discord bot), not a web service
+# No http_service needed
 
 [[vm]]
   memory = '256mb'
   cpu_kind = 'shared'
   cpus = 1
+
+# Keep the bot running (don't auto-stop)
+[processes]
+  app = "mix run --no-halt"
