@@ -1,6 +1,5 @@
 defmodule AocBot.Commands.Leaderboard do
   import Nostrum.Struct.Embed
-  alias Nostrum.Api
   alias TableRex.Table
   require Logger
 
@@ -18,15 +17,9 @@ defmodule AocBot.Commands.Leaderboard do
 
     emoji =
       case rank do
-        1 ->
-          "🥇"
-
-        2 ->
-          "🥈"
-
-        3 ->
-          "🥉"
-
+        1 -> "🥇"
+        2 -> "🥈"
+        3 -> "🥉"
         _ ->
           case score do
             score when score > 1800 -> "🎄"
@@ -36,11 +29,6 @@ defmodule AocBot.Commands.Leaderboard do
       end
 
     ["#{score} #{emoji}", get_name(member), member["stars"]]
-  end
-
-  def run(msg, _extra) do
-    embed = get_leaderboard(0)
-    Api.create_message(msg.channel_id, embeds: [embed])
   end
 
   defp get_members(data, start) do
@@ -57,11 +45,19 @@ defmodule AocBot.Commands.Leaderboard do
         end).()
   end
 
-  def get_leaderboard(start) do
-    data = AocBot.Fetcher.get_data()
-    Logger.debug(data)
+  @doc "Get leaderboard embed for a guild. Returns {:ok, embed} or {:error, reason}"
+  def get_leaderboard(guild_id) do
+    case AocBot.Fetcher.get_data(guild_id) do
+      {:ok, data} ->
+        {:ok, build_embed(data, guild_id)}
 
-    members = get_members(data["members"], start)
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp build_embed(data, guild_id) do
+    members = get_members(data["members"], 0)
 
     table =
       Table.new(members, @header)
@@ -70,9 +66,14 @@ defmodule AocBot.Commands.Leaderboard do
       |> Table.put_header_meta(0..2, color: :yellow)
       |> Table.put_header_meta(2, align: :left)
 
-    %Nostrum.Struct.Embed{}
+    # Get the leaderboard URL for the link
+    url = case AocBot.ServerConfig.get(guild_id) do
+      {:ok, config} -> config.aoc_leaderboard_url
+      _ -> nil
+    end
+
+    embed = %Nostrum.Struct.Embed{}
     |> put_title("Leaderboard")
-    |> put_url(Application.get_env(:aoc_bot, :url))
     |> put_color(0x009900)
     |> put_description("```ansi
 #{Table.render!(table, horizontal_style: :header, vertical_style: :off, header_separator_symbol: "=", bottom_frame_symbol: "", top_frame_symbol: "", intersection_symbol: "", vertical_symbol: "")}
@@ -82,6 +83,14 @@ defmodule AocBot.Commands.Leaderboard do
 
 PS: #{AocBot.Commands.Countdown.days_until()}
 ")
-    |> put_timestamp(AocBot.Fetcher.get_last_fetch_time())
+
+    # Add URL if available
+    embed = if url, do: put_url(embed, url), else: embed
+
+    # Add timestamp if available
+    case AocBot.Fetcher.get_last_fetch_time(guild_id) do
+      nil -> embed
+      timestamp -> put_timestamp(embed, timestamp)
+    end
   end
 end

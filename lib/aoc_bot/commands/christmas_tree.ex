@@ -1,5 +1,4 @@
 defmodule AocBot.Commands.ChristmasTree do
-  alias Nostrum.Api
   import Nostrum.Struct.Embed
   require Logger
 
@@ -42,18 +41,36 @@ defmodule AocBot.Commands.ChristmasTree do
   end
 
   def embed do
-    %Nostrum.Struct.Embed{}
-    |> put_title("Your Christmas tree is here!")
-    |> put_color(0x009900)
-    |> put_description("```ansi
-#{generate(15)}
-```
-")
-  end
-
-  def run(msg) do
-    embed = embed()
-
-    Api.create_message(msg.channel_id, embeds: [embed])
+    %{
+      flags: 32_768,
+      components: [
+        %{
+          # CONTAINER
+          type: 17,
+          accent_color: 0x009900,
+          components: [
+            %{
+              # TEXT_DISPLAY
+              type: 10,
+              content: "# Your Christmas tree is here!"
+            },
+            %{
+              # SEPARATOR
+              type: 14,
+              divider: false
+            },
+            %{
+              # TEXT_DISPLAY
+              type: 10,
+              content: """
+              ```ansi
+              #{generate(15)}
+              ```
+              """
+            }
+          ]
+        }
+      ]
+    }
   end
 end

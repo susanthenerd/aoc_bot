@@ -20,10 +20,10 @@ defmodule AocBot.MixProject do
 
   defp deps do
     [
-      {:nostrum, "~> 0.8.0"},
+      {:nostrum, github: "Kraigie/nostrum"},
       {:jason, "~> 1.4"},
       {:httpoison, "~> 2.2"},
-      {:table_rex, "~> 4.0.0"},
+      {:table_rex, "~> 4.1"},
       {:quantum, "~> 3.5"},
       {:timex, "~> 3.7"},
       {:ecto_sql, "~> 3.11"},

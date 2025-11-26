@@ -1,5 +1,4 @@
 defmodule AocBot.Commands.RandomMessage do
-  alias Nostrum.Api
   import Nostrum.Struct.Embed
 
   @messages [
@@ -30,13 +29,11 @@ defmodule AocBot.Commands.RandomMessage do
     |> Enum.random()
   end
 
-  def run(msg) do
-    embed =
-      %Nostrum.Struct.Embed{}
-      |> put_title("Random Message")
-      |> put_color(0x009900)
-      |> put_description("#{get_random_message()}")
-
-    Api.create_message(msg.channel_id, embed: embed)
+  def embed do
+    %Nostrum.Struct.Embed{}
+    |> put_title("Random Message")
+    |> put_color(0x009900)
+    |> put_description("#{get_random_message()}")
   end
+
 end

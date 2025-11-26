@@ -1,144 +1,126 @@
 defmodule AocBot.Fetcher do
   @moduledoc """
-  This module is responsible for fetching data from the API at regular intervals.
-  It uses GenServer to manage its state and schedule fetch operations.
+  Fetches Advent of Code leaderboard data on-demand with per-guild caching.
+  Uses ETS for caching with a 15-minute TTL.
   """
 
-  use GenServer
   require Logger
 
-  @interval 900
+  @cache_table :aoc_fetcher_cache
+  @cache_ttl_seconds 900  # 15 minutes
 
-  defstruct data: %{}, last_fetch: DateTime.utc_now(), auto_fetch: false
-
-  @type t :: %__MODULE__{
-          data: map(),
-          last_fetch: DateTime.t(),
-          auto_fetch: boolean()
-        }
-
-  @type gen_server_response :: {:ok, t, {:continue, :fetch}} | {:ok, t}
-
-  @doc """
-  Starts the GenServer with the given arguments.
-  """
-  @spec start_link(list()) :: GenServer.on_start()
-  def start_link(args) do
-    GenServer.start_link(__MODULE__, args, name: __MODULE__)
+  @doc "Initialize the ETS cache table. Called from Application."
+  def init_cache do
+    :ets.new(@cache_table, [:set, :public, :named_table])
+    :ok
   end
 
   @doc """
-  Initializes the GenServer state.
+  Get leaderboard data for a guild. Returns cached data if fresh, otherwise fetches.
+  Returns {:ok, data} or {:error, reason}
   """
-  @spec init(any()) :: gen_server_response()
-  def init(_) do
-    {:ok,
-     %{
-       data: %{},
-       last_fetch: DateTime.add(DateTime.utc_now(), -@interval, :second),
-       auto_fetch: false
-     }, {:continue, :fetch}}
-  end
+  def get_data(guild_id) do
+    case get_cached(guild_id) do
+      {:ok, data} ->
+        Logger.debug("Using cached data for guild #{guild_id}")
+        {:ok, data}
 
-  @doc """
-  Retrieves the fetched data.
-  """
-  @spec get_data() :: any()
-  def get_data(), do: GenServer.call(__MODULE__, :get_data)
-
-  @doc """
-  Enables automatic fetching.
-  """
-  @spec enable_auto_fetch() :: :ok
-  def enable_auto_fetch(), do: GenServer.call(__MODULE__, :enable_auto_fetch)
-
-  @doc """
-  Disables automatic fetching.
-  """
-  @spec disable_auto_fetch() :: :ok
-  def disable_auto_fetch(), do: GenServer.call(__MODULE__, :disable_auto_fetch)
-
-  @doc """
-  Retrieves the state of automatic fetching.
-  """
-  @spec get_auto_fetch_state() :: boolean()
-  def get_auto_fetch_state(), do: GenServer.call(__MODULE__, :get_auto_fetch_state)
-
-  @doc """
-  Retrieves the time of the last fetch operation.
-  """
-  @spec get_last_fetch_time() :: DateTime.t()
-  def get_last_fetch_time(), do: GenServer.call(__MODULE__, :get_last_fetch_time)
-
-  def handle_continue(:fetch, state), do: {:noreply, fetch(state)}
-  def handle_info(:fetch, state), do: {:noreply, fetch(state)}
-  def handle_info(:auto_fetch, state), do: {:noreply, handle_auto_fetch(state)}
-
-  def handle_call(:get_data, _from, state) do
-    new_state = fetch(state)
-    {:reply, new_state.data, new_state}
-  end
-
-  def handle_call(:enable_auto_fetch, _from, state), do: {:reply, :ok, enable_auto_fetch(state)}
-
-  def handle_call(:disable_auto_fetch, _from, state),
-    do: {:reply, :ok, %{state | auto_fetch: false}}
-
-  def handle_call(:get_auto_fetch_state, _from, state), do: {:reply, state.auto_fetch, state}
-  def handle_call(:get_last_fetch_time, _from, state), do: {:reply, state.last_fetch, state}
-
-  defp fetch(state) do
-    if DateTime.diff(DateTime.utc_now(), state.last_fetch, :second) >= @interval do
-      perform_fetch(state)
-    else
-      Logger.info("Using cached data")
-      state
+      :miss ->
+        Logger.info("Cache miss for guild #{guild_id}, fetching fresh data")
+        fetch_and_cache(guild_id)
     end
   end
 
-  defp perform_fetch(state) do
-    with {:ok, data} <- fetch_data() do
-      Logger.debug(data)
-      %{state | data: data, last_fetch: DateTime.utc_now()}
-    else
-      _ -> schedule_fetch(state)
+  @doc "Force refresh data for a guild, ignoring cache"
+  def refresh(guild_id) do
+    fetch_and_cache(guild_id)
+  end
+
+  @doc "Get the last fetch time for a guild"
+  def get_last_fetch_time(guild_id) do
+    case :ets.lookup(@cache_table, guild_id) do
+      [{^guild_id, _data, timestamp}] -> timestamp
+      [] -> nil
     end
   end
 
-  defp schedule_fetch(state) do
-    Process.send_after(self(), :fetch, @interval)
-    state
+  @doc "Clear cache for a guild"
+  def clear_cache(guild_id) do
+    :ets.delete(@cache_table, guild_id)
+    :ok
   end
 
-  defp handle_auto_fetch(state) do
-    if state.auto_fetch do
-      fetch(state)
-      |> schedule_fetch()
-    else
-      Logger.info("Auto-fetch is now disabled. Skipping fetch.")
-      state
+  # Private functions
+
+  defp get_cached(guild_id) do
+    case :ets.lookup(@cache_table, guild_id) do
+      [{^guild_id, data, timestamp}] ->
+        age = DateTime.diff(DateTime.utc_now(), timestamp, :second)
+        if age < @cache_ttl_seconds do
+          {:ok, data}
+        else
+          :miss
+        end
+
+      [] ->
+        :miss
     end
   end
 
-  defp enable_auto_fetch(state) do
-    fetch(state)
-    |> schedule_fetch()
-    |> Map.put(:auto_fetch, true)
+  defp fetch_and_cache(guild_id) do
+    with {:ok, config} <- AocBot.ServerConfig.get(guild_id),
+         :ok <- validate_config(config),
+         {:ok, data} <- fetch_from_aoc(config.aoc_leaderboard_url, config.aoc_token) do
+      timestamp = DateTime.utc_now()
+      :ets.insert(@cache_table, {guild_id, data, timestamp})
+      {:ok, data}
+    end
   end
 
-  defp fetch_data do
-    url = Application.get_env(:aoc_bot, :url) <> ".json"
-    cookie = Application.get_env(:aoc_bot, :cookie)
+  defp validate_config(config) do
+    cond do
+      is_nil(config.aoc_token) ->
+        {:error, :token_not_set}
 
-    headers = %{"Cookie" => "session=#{cookie}"}
+      is_nil(config.aoc_leaderboard_url) ->
+        {:error, :leaderboard_not_set}
 
-    case HTTPoison.get(url, headers) do
+      true ->
+        :ok
+    end
+  end
+
+  defp fetch_from_aoc(url, token) do
+    json_url = ensure_json_url(url)
+    headers = [{"Cookie", "session=#{token}"}]
+
+    Logger.debug("Fetching AOC data from #{json_url}")
+
+    case HTTPoison.get(json_url, headers) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        Logger.debug(body)
         Jason.decode(body)
 
+      {:ok, %HTTPoison.Response{status_code: 400}} ->
+        {:error, :invalid_token}
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :leaderboard_not_found}
+
+      {:ok, %HTTPoison.Response{status_code: status}} ->
+        {:error, {:http_error, status}}
+
       {:error, %HTTPoison.Error{reason: reason}} ->
-        {:error, reason}
+        {:error, {:network_error, reason}}
+    end
+  end
+
+  # Ensure URL ends with .json
+  defp ensure_json_url(url) do
+    url = String.trim_trailing(url, "/")
+    if String.ends_with?(url, ".json") do
+      url
+    else
+      url <> ".json"
     end
   end
 end

@@ -20,14 +20,9 @@
     initialDatabases = [ { name = "aoc_bot_dev"; } ];
   };
 
-  processes = {
-    app.exec = "mix run --no-halt";
-  };
-
-  enterShell = ''
-    flyctl completion fish | source
-
-  '';
+  # processes = {
+  #   app.exec = "mix run --no-halt";
+  # };
 
   containers = {
     aoc-bot = {

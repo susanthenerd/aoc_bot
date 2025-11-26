@@ -2,26 +2,62 @@ defmodule AocBot.TodayPing do
   import Nostrum.Struct.Embed
   alias Nostrum.Api
   alias AocBot.Commands
+  alias AocBot.ServerConfig
   require Logger
-  alias HTTPoison
 
   @moduledoc """
-  Responsible for fetching the daily Advent of Code challenge title and sending notifications to a specified Discord channel.
+  Responsible for fetching the daily Advent of Code challenge title and sending notifications to configured Discord channels.
   """
 
+  @doc "Send today's challenge to all configured servers (for scheduled job)"
   def send_today_ping(ping \\ false) do
     today = Date.utc_today()
 
     if today.month == 12 and today.day in 1..25 do
       case fetch_challenge_title(today) do
         {:ok, challenge_title} ->
-          send_ping_message(challenge_title, today, ping)
+          # Send to all configured servers
+          ServerConfig.all_configured()
+          |> Enum.each(fn config ->
+            if config.channel_id do
+              send_to_channel(config, challenge_title, today, ping)
+            end
+          end)
 
         {:error, reason} ->
           Logger.error("Failed to fetch challenge title: #{reason}")
       end
     else
       Logger.info("Not December or out of date range, skipping today ping")
+    end
+  end
+
+  @doc "Send today's challenge to a specific guild (for /today command)"
+  def send_for_guild(guild_id) do
+    today = Date.utc_today()
+
+    cond do
+      today.month != 12 or today.day not in 1..25 ->
+        {:error, :not_december}
+
+      true ->
+        case ServerConfig.get(guild_id) do
+          {:ok, config} when not is_nil(config.channel_id) ->
+            case fetch_challenge_title(today) do
+              {:ok, challenge_title} ->
+                send_to_channel(config, challenge_title, today, false)
+                :ok
+
+              {:error, reason} ->
+                {:error, reason}
+            end
+
+          {:ok, _config} ->
+            {:error, :not_configured}
+
+          {:error, :not_configured} ->
+            {:error, :not_configured}
+        end
     end
   end
 
@@ -41,46 +77,37 @@ defmodule AocBot.TodayPing do
   defp extract_challenge_title(html) do
     case Regex.run(~r/<h2>(.*?)<\/h2>/, html) do
       [_, title] -> title
-      _ -> {:error, "Title not found"}
+      _ -> "Day #{Date.utc_today().day}"
     end
   end
 
-  defp send_ping_message(challenge_title, %Date{day: 25} = today, ping) do
-    send_message(
-      "Merry Christmas! The last challenge of the year is here 🚀",
-      challenge_title,
-      today,
-      ping
-    )
-  end
-
-  defp send_ping_message(challenge_title, today, ping) do
-    send_message("Today's Advent of Code Challenge! 🚀", challenge_title, today, ping)
-  end
-
-  defp send_message(title, challenge_title, today, ping) do
-    channel_id = Application.get_env(:aoc_bot, :channel_id)
-    role_id = Application.get_env(:aoc_bot, :role_id)
+  defp send_to_channel(config, challenge_title, today, ping) do
     url = challenge_url(today)
+
+    title =
+      if today.day == 25 do
+        "Merry Christmas! The last challenge of the year is here 🚀"
+      else
+        "Today's Advent of Code Challenge! 🚀"
+      end
 
     challenge_embed = build_embed(title, challenge_title, url, today)
 
-    content = if ping do
-      "<@&#{role_id}>"
-    else
-      ""
-    end
+    content =
+      if ping and config.role_to_ping do
+        "<@&#{config.role_to_ping}>"
+      else
+        ""
+      end
 
-    Api.create_message(channel_id, content: content, embed: challenge_embed)
+    Api.Message.create(config.channel_id, content: content, embeds: [challenge_embed])
   end
 
   defp build_embed(title, challenge_title, url, today) do
-    embed_color = 0x009900
-
     %Nostrum.Struct.Embed{}
     |> put_title(title)
     |> put_description(description(challenge_title, url, today))
-    |> put_color(embed_color)
+    |> put_color(0x009900)
   end
 
   defp description(challenge_title, url, %Date{day: 25}) do

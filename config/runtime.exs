@@ -24,10 +24,6 @@ end
 config :aoc_bot,
   ecto_repos: [AocBot.Repo]
 
-# Discord token from environment
-config :nostrum,
-  token: System.get_env("DISCORD_TOKEN")
-
 # Note: Server-specific configuration (channel_id, role_id, aoc_token, etc.)
 # is now stored in the database via AocBot.ServerConfig schema
 # This allows different settings per Discord server

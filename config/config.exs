@@ -2,10 +2,6 @@ import Config
 
 # Static compile-time configuration
 
-# Nostrum gateway intents
-config :nostrum,
-  gateway_intents: [:guild_messages, :message_content]
-
 # Scheduler configuration
 config :aoc_bot, AocBot.Scheduler,
   jobs: [

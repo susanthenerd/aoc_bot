@@ -1,5 +1,4 @@
 defmodule AocBot.Commands.Countdown do
-  alias Nostrum.Api
   import Nostrum.Struct.Embed
 
   def days_until do
@@ -58,13 +57,11 @@ defmodule AocBot.Commands.Countdown do
     end
   end
 
-  def run(msg) do
-    embed =
-      %Nostrum.Struct.Embed{}
-      |> put_title("Advent of Code Countdown")
-      |> put_color(0x00AAFF)
-      |> put_description("#{days_until()}")
-
-    Api.create_message(msg.channel_id, embed: embed)
+  def embed do
+    %Nostrum.Struct.Embed{}
+    |> put_title("Advent of Code Countdown")
+    |> put_color(0x00AAFF)
+    |> put_description("#{days_until()}")
   end
+
 end
