@@ -1,7 +1,19 @@
 defmodule AocBot.Commands.ChristmasTree do
-  import Nostrum.Struct.Embed
-  require Logger
+  use AocBot.Command
 
+  @impl AocBot.Command
+  def definition, do: %{name: "tree", description: "Display a festive Christmas tree"}
+
+  @impl AocBot.Command
+  def execute(interaction) do
+    respond(interaction, container(0x009900, [
+      text("# Your Christmas tree is here!"),
+      separator(false),
+      ansi_block(generate(15))
+    ]))
+  end
+
+  @doc "Generate an ASCII Christmas tree with ANSI colors"
   def generate(height) do
     star =
       String.duplicate(" ", height - 1) <>
@@ -38,39 +50,5 @@ defmodule AocBot.Commands.ChristmasTree do
       IO.ANSI.cyan(),
       IO.ANSI.magenta()
     ])
-  end
-
-  def embed do
-    %{
-      flags: 32_768,
-      components: [
-        %{
-          # CONTAINER
-          type: 17,
-          accent_color: 0x009900,
-          components: [
-            %{
-              # TEXT_DISPLAY
-              type: 10,
-              content: "# Your Christmas tree is here!"
-            },
-            %{
-              # SEPARATOR
-              type: 14,
-              divider: false
-            },
-            %{
-              # TEXT_DISPLAY
-              type: 10,
-              content: """
-              ```ansi
-              #{generate(15)}
-              ```
-              """
-            }
-          ]
-        }
-      ]
-    }
   end
 end

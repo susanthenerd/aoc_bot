@@ -1,34 +1,88 @@
 defmodule AocBot.Commands.Leaderboard do
-  import Nostrum.Struct.Embed
+  use AocBot.Command
   alias TableRex.Table
-  require Logger
 
-  @header ["Score 🎁", "Name 🎅", "🌟"]
+  @header ["Score", "", "Name", "Stars"]
 
-  defp get_name(member) do
-    case member["name"] do
-      name when is_nil(name) -> "(elf ##{member["id"]})"
-      name -> name
+  @impl AocBot.Command
+  def definition, do: %{name: "ldr", description: "Show the Advent of Code leaderboard"}
+
+  @impl AocBot.Command
+  def execute(interaction) do
+    guild_id = interaction.guild_id
+
+    case AocBot.Fetcher.get_data(guild_id) do
+      {:ok, data} ->
+        respond(interaction, build_response(data, guild_id))
+
+      {:error, :not_configured} ->
+        respond_ephemeral(interaction, "Server not configured. Ask an admin to run `/setup`.")
+
+      {:error, :token_not_set} ->
+        respond_ephemeral(interaction, "AOC token not set. Ask an admin to run `/setup`.")
+
+      {:error, :leaderboard_not_set} ->
+        respond_ephemeral(interaction, "Leaderboard URL not set. Ask an admin to run `/setup`.")
+
+      {:error, :invalid_token} ->
+        respond_ephemeral(interaction, "Invalid AOC token. Ask an admin to update `/setup`.")
+
+      {:error, :leaderboard_not_found} ->
+        respond_ephemeral(interaction, "Leaderboard not found. Ask an admin to check `/setup`.")
+
+      {:error, reason} ->
+        Logger.error("Leaderboard fetch error: #{inspect(reason)}")
+        respond_ephemeral(interaction, "Failed to fetch leaderboard. Try again later.")
     end
   end
 
-  defp format({_id, member}, rank) do
-    score = member["local_score"]
+  defp build_response(data, guild_id) do
+    members = get_members(data["members"], 0)
+    table = build_table(members)
 
-    emoji =
-      case rank do
-        1 -> "🥇"
-        2 -> "🥈"
-        3 -> "🥉"
-        _ ->
-          case score do
-            score when score > 1800 -> "🎄"
-            score when score > 1500 -> "⛄"
-            _ -> "🍪"
-          end
+    url =
+      case AocBot.ServerConfig.get(guild_id) do
+        {:ok, config} -> config.aoc_leaderboard_url
+        _ -> nil
       end
 
-    ["#{score} #{emoji}", get_name(member), member["stars"]]
+    timestamp =
+      case AocBot.Fetcher.get_last_fetch_time(guild_id) do
+        nil -> ""
+        ts -> "\n-# Last updated: #{format_timestamp(ts)}"
+      end
+
+    url_line = if url, do: "\n[View on adventofcode.com](#{url})", else: ""
+
+    container(0x009900, [
+      text("# Leaderboard"),
+      separator(),
+      text("```ansi\n#{table}\n```"),
+      separator(),
+      text("""
+      **Random Message:**
+      > #{AocBot.Commands.RandomMessage.get_random_message()}
+
+      #{AocBot.Commands.Countdown.days_until()}#{url_line}#{timestamp}
+      """)
+    ])
+  end
+
+  defp build_table(members) do
+    Table.new(members, @header)
+    |> Table.put_column_meta(3, color: :green, align: :right)
+    |> Table.put_column_meta(0, color: :red, align: :right)
+    |> Table.put_header_meta(0..3, color: :yellow)
+    |> Table.put_header_meta(3, align: :left)
+    |> Table.render!(
+      horizontal_style: :header,
+      vertical_style: :off,
+      header_separator_symbol: "=",
+      bottom_frame_symbol: "",
+      top_frame_symbol: "",
+      intersection_symbol: "",
+      vertical_symbol: ""
+    )
   end
 
   defp get_members(data, start) do
@@ -36,61 +90,38 @@ defmodule AocBot.Commands.Leaderboard do
     |> Enum.sort_by(fn {_, member} -> member["local_score"] end, &>=/2)
     |> Enum.with_index(1)
     |> Enum.map(fn {{id, member}, rank} -> format({id, member}, rank) end)
-    |> (fn list ->
-          if Enum.count(list) > start do
-            Enum.slice(list, start, 20)
-          else
-            Enum.slice(list, 0, 20)
-          end
-        end).()
+    |> then(fn list ->
+      if Enum.count(list) > start do
+        Enum.slice(list, start, 20)
+      else
+        Enum.slice(list, 0, 20)
+      end
+    end)
   end
 
-  @doc "Get leaderboard embed for a guild. Returns {:ok, embed} or {:error, reason}"
-  def get_leaderboard(guild_id) do
-    case AocBot.Fetcher.get_data(guild_id) do
-      {:ok, data} ->
-        {:ok, build_embed(data, guild_id)}
+  defp format({_id, member}, rank) do
+    score = member["local_score"]
+    emoji = rank_emoji(rank, score)
+    [score, emoji, get_name(member), member["stars"]]
+  end
 
-      {:error, reason} ->
-        {:error, reason}
+  defp rank_emoji(1, _), do: "1st"
+  defp rank_emoji(2, _), do: "2nd"
+  defp rank_emoji(3, _), do: "3rd"
+  defp rank_emoji(_, score) when score > 1800, do: "***"
+  defp rank_emoji(_, score) when score > 1500, do: "**"
+  defp rank_emoji(_, _), do: "*"
+
+  defp get_name(member) do
+    case member["name"] do
+      nil -> "(elf ##{member["id"]})"
+      name -> name
     end
   end
 
-  defp build_embed(data, guild_id) do
-    members = get_members(data["members"], 0)
-
-    table =
-      Table.new(members, @header)
-      |> Table.put_column_meta(2, color: :green, align: :right)
-      |> Table.put_column_meta(0, color: :red, align: :right)
-      |> Table.put_header_meta(0..2, color: :yellow)
-      |> Table.put_header_meta(2, align: :left)
-
-    # Get the leaderboard URL for the link
-    url = case AocBot.ServerConfig.get(guild_id) do
-      {:ok, config} -> config.aoc_leaderboard_url
-      _ -> nil
-    end
-
-    embed = %Nostrum.Struct.Embed{}
-    |> put_title("Leaderboard")
-    |> put_color(0x009900)
-    |> put_description("```ansi
-#{Table.render!(table, horizontal_style: :header, vertical_style: :off, header_separator_symbol: "=", bottom_frame_symbol: "", top_frame_symbol: "", intersection_symbol: "", vertical_symbol: "")}
-```
-**Random Message:**
-> #{AocBot.Commands.RandomMessage.get_random_message()}
-
-PS: #{AocBot.Commands.Countdown.days_until()}
-")
-
-    # Add URL if available
-    embed = if url, do: put_url(embed, url), else: embed
-
-    # Add timestamp if available
-    case AocBot.Fetcher.get_last_fetch_time(guild_id) do
-      nil -> embed
-      timestamp -> put_timestamp(embed, timestamp)
-    end
+  defp format_timestamp(timestamp) do
+    timestamp
+    |> DateTime.truncate(:second)
+    |> Calendar.strftime("%Y-%m-%d %H:%M UTC")
   end
 end
