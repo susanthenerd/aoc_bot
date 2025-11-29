@@ -2,7 +2,7 @@ defmodule AocBot.Commands.Countdown do
   use AocBot.Command
 
   @impl AocBot.Command
-  def definition, do: %{name: "countdown", description: "Days until Advent of Code / Christmas"}
+  def definition, do: %{name: "countdown", description: "Days until Advent of Code ends"}
 
   @impl AocBot.Command
   def execute(interaction) do
@@ -17,40 +17,40 @@ defmodule AocBot.Commands.Countdown do
   def days_until do
     today = Date.utc_today()
     {year, _, _} = Date.to_erl(today)
-    end_this_year = Date.new!(year, 12, 25)
+    end_this_year = Date.new!(year, 12, 12)
 
     days = Date.diff(end_this_year, today)
 
     cond do
-      days < -4 ->
+      days < 0 ->
         days_until_next_year = Date.diff(Date.new!(year + 1, 12, 1), today)
 
         [
-          "The puzzles are solved, and the leaderboard is frozen. Only #{days_until_next_year} days until the next epic code-off!",
-          "The party's over, but the hype train rolls on. Recharge for next year's AoC—#{days_until_next_year} days left!",
-          "Post-AoC mode: Deploying naps and celebrating triumphs. Next adventure begins in #{days_until_next_year} days!",
-          "Another year of puzzles complete! Time to refactor life. Next round begins in #{days_until_next_year} days!",
-          "Code, rest, repeat. The countdown to AoC #{year + 1} is already ticking—#{days_until_next_year} days to go!"
+          "All 12 puzzles complete! The leaderboard is frozen. Only #{days_until_next_year} days until next year's Advent of Code!",
+          "Advent of Code #{year} is wrapped up! Recharge for next year—#{days_until_next_year} days to go!",
+          "Post-AoC mode: All 12 days conquered! Next adventure begins in #{days_until_next_year} days!",
+          "Another 12 days of puzzles complete! Next round begins in #{days_until_next_year} days!",
+          "The 12-day journey is over. Countdown to AoC #{year + 1}: #{days_until_next_year} days!"
         ]
         |> Enum.random()
 
       days == 0 ->
         [
-          "GG! Advent of Code #{year} has reached its final puzzle! Congratulations on all your achievements!",
-          "The final star is yours! Reflect, celebrate, and share your triumphs! AoC #{year} is in the books!",
-          "Puzzle complete, leaderboard locked, memories made. Advent of Code #{year} ends today—GG!",
-          "A legendary journey concludes today. Whether you solved one puzzle or them all, you're a star! GG, Advent of Code #{year}!",
-          "It's the end of AoC #{year}, but the beginning of all the stories you'll tell about it. Well played! GG!"
+          "Day 12 of 12! Advent of Code #{year} reaches its grand finale! GG!",
+          "The twelfth and final star awaits! AoC #{year} concludes today—make it count!",
+          "Puzzle 12 of 12! The last challenge of Advent of Code #{year} is here—GG!",
+          "The final day! Whether you solved one puzzle or all twelve, you're a star! GG, AoC #{year}!",
+          "It's day 12—the end of AoC #{year}! Finish strong and celebrate! GG!"
         ]
         |> Enum.random()
 
-      days <= 24 ->
+      days <= 11 ->
         [
-          "Only #{days} days left! I hope you've been nice, because Santa just upgraded his naughty list to a blockchain, and it's immutable!",
-          "Christmas countdown engaged! #{days} days until the sleigh launch.",
-          "Keep calm and jingle on! Just #{days} more sleeps to go!",
-          "Debugging the halls! #{days} days until Christmas!",
-          "Santa's running final tests on toys. T-minus #{days} days to Christmas!"
+          "Day #{12 - days} of 12 complete! Only #{days} days of Advent of Code remaining!",
+          "#{days} puzzles to go! Keep those stars coming!",
+          "We're on day #{12 - days}—#{days} more chances to shine on the leaderboard!",
+          "#{days} days left in Advent of Code #{year}! The countdown continues!",
+          "Puzzle #{12 - days} of 12 awaits! Just #{days} more days of coding glory!"
         ]
         |> Enum.random()
 

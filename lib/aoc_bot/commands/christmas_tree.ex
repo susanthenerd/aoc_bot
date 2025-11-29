@@ -6,11 +6,14 @@ defmodule AocBot.Commands.ChristmasTree do
 
   @impl AocBot.Command
   def execute(interaction) do
-    respond(interaction, container(0x009900, [
-      text("# Your Christmas tree is here!"),
-      separator(false),
-      ansi_block(generate(15))
-    ]))
+    respond(
+      interaction,
+      container(0x009900, [
+        text("# Your Christmas tree is here!"),
+        separator(false),
+        ansi_block(generate(16))
+      ])
+    )
   end
 
   @doc "Generate an ASCII Christmas tree with ANSI colors"

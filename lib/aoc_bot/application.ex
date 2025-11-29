@@ -7,9 +7,10 @@ defmodule AocBot.Application do
 
     bot_options = %{
       consumer: AocBot.Consumer,
-      intents: [:guild_messages, :message_content],
+      intents: [],
       wrapped_token: fn -> System.get_env("DISCORD_TOKEN") end,
-      log_full_events: Mix.env() == :dev
+      log_full_events: Mix.env() == :dev,
+      ffmpeg: nil
     }
 
     children = [

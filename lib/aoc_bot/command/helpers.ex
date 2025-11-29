@@ -19,6 +19,10 @@ defmodule AocBot.Command.Helpers do
   import Bitwise
   alias Nostrum.Api
 
+  # Flag constants
+  @ephemeral 64
+  @components_v2 32_768
+
   @doc """
   Sends an interaction response with Components v2 data.
 
@@ -85,9 +89,21 @@ defmodule AocBot.Command.Helpers do
     text("```ansi\n#{content}\n```")
   end
 
-  # Flag constants
-  @ephemeral 64
-  @components_v2 32_768
+  @doc """
+  Sends a channel message with Components v2.
+
+  Options:
+  - `:content` - Text content (for mentions, etc.)
+  """
+  def send_message(channel_id, data, opts \\ []) do
+    content = Keyword.get(opts, :content, "")
+
+    Api.Message.create(channel_id,
+      content: content,
+      components: data.components,
+      flags: @components_v2
+    )
+  end
 
   defp build_flags(opts) do
     base = @components_v2

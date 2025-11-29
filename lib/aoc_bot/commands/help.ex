@@ -13,7 +13,7 @@ defmodule AocBot.Commands.Help do
       **Commands:**
       `/ldr` - Show the Advent of Code leaderboard
       `/tree` - Display a festive Christmas tree
-      `/countdown` - Days until Advent of Code / Christmas
+      `/countdown` - Days until Advent of Code ends
       `/random` - Get a random holiday message
       `/help` - Show this help message
       `/ping` - Check if the bot is alive

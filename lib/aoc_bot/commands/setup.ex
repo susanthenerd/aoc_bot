@@ -31,7 +31,7 @@ defmodule AocBot.Commands.Setup do
         },
         %{
           name: "leaderboard",
-          description: "Leaderboard URL (e.g. https://adventofcode.com/2024/leaderboard/private/view/12345)",
+          description: "Leaderboard URL (e.g. https://adventofcode.com/2025/leaderboard/private/view/12345)",
           type: 3,
           required: true
         }

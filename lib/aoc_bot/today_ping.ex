@@ -1,22 +1,21 @@
 defmodule AocBot.TodayPing do
-  import Nostrum.Struct.Embed
-  alias Nostrum.Api
+  @moduledoc """
+  Responsible for fetching the daily Advent of Code challenge title
+  and sending notifications to configured Discord channels.
+  """
+
+  import AocBot.Command.Helpers
   alias AocBot.Commands
   alias AocBot.ServerConfig
   require Logger
-
-  @moduledoc """
-  Responsible for fetching the daily Advent of Code challenge title and sending notifications to configured Discord channels.
-  """
 
   @doc "Send today's challenge to all configured servers (for scheduled job)"
   def send_today_ping(ping \\ false) do
     today = Date.utc_today()
 
-    if today.month == 12 and today.day in 1..25 do
+    if today.month == 12 and today.day in 1..12 do
       case fetch_challenge_title(today) do
         {:ok, challenge_title} ->
-          # Send to all configured servers
           ServerConfig.all_configured()
           |> Enum.each(fn config ->
             if config.channel_id do
@@ -37,7 +36,7 @@ defmodule AocBot.TodayPing do
     today = Date.utc_today()
 
     cond do
-      today.month != 12 or today.day not in 1..25 ->
+      today.month != 12 or today.day not in 1..12 ->
         {:error, :not_december}
 
       true ->
@@ -83,15 +82,7 @@ defmodule AocBot.TodayPing do
 
   defp send_to_channel(config, challenge_title, today, ping) do
     url = challenge_url(today)
-
-    title =
-      if today.day == 25 do
-        "Merry Christmas! The last challenge of the year is here 🚀"
-      else
-        "Today's Advent of Code Challenge! 🚀"
-      end
-
-    challenge_embed = build_embed(title, challenge_title, url, today)
+    message = build_message(challenge_title, url, today)
 
     content =
       if ping and config.role_to_ping do
@@ -100,53 +91,52 @@ defmodule AocBot.TodayPing do
         ""
       end
 
-    Api.Message.create(config.channel_id, content: content, embeds: [challenge_embed])
+    send_message(config.channel_id, message, content: content)
   end
 
-  defp build_embed(title, challenge_title, url, today) do
-    %Nostrum.Struct.Embed{}
-    |> put_title(title)
-    |> put_description(description(challenge_title, url, today))
-    |> put_color(0x009900)
+  defp build_message(challenge_title, url, %Date{year: year, day: 12}) do
+    container(0x009900, [
+      text("# The Final Day of Advent of Code #{year}!"),
+      separator(),
+      text("""
+      Code Wizards, we've reached the twelfth and final day!
+
+      This year's Advent of Code journey comes to a close. As you tackle this last challenge, take a moment to celebrate all twelve puzzles you've conquered.
+
+      **Challenge:** [#{challenge_title}](#{url})
+      """),
+      separator(false),
+      ansi_block(Commands.ChristmasTree.generate(15)),
+      separator(),
+      text("""
+      **Random Message:**
+      > #{Commands.RandomMessage.get_random_message()}
+
+      Thank you for coding along through all 12 days of Advent of Code #{year}—you've earned your stars!
+
+      #{Commands.Countdown.days_until()}
+      """)
+    ])
   end
 
-  defp description(challenge_title, url, %Date{day: 25}) do
-    """
-    🎄 Merry Christmas, Code Wizards! 🎄
+  defp build_message(challenge_title, url, _today) do
+    container(0x009900, [
+      text("# Today's Advent of Code Challenge!"),
+      separator(),
+      text("""
+      Good morning, Code Wizards! Today's challenge is ready for you.
 
-    Today is a day of joy, celebration, and one last hoorah of coding challenges for the year! As you dive into today's problem, take a moment to reflect on all the puzzles you've conquered.
+      **Challenge:** [#{challenge_title}](#{url})
+      """),
+      separator(false),
+      ansi_block(Commands.ChristmasTree.generate(15)),
+      separator(),
+      text("""
+      **Random Message:**
+      > #{Commands.RandomMessage.get_random_message()}
 
-    Challenge Title: **[#{challenge_title}](#{url})**
-
-    Feel the holiday spirit with the final Christmas tree of the season:
-    ```ansi
-    #{Commands.ChristmasTree.generate(15)}
-    ```
-
-    Random Message of the Day:
-    #{Commands.RandomMessage.get_random_message()}
-
-    As you celebrate, remember, every line of code you've written this month has led to this moment. Cherish it, enjoy today's challenge, and have a wonderful Christmas filled with happiness and code!
-
-    PS: #{Commands.Countdown.days_until()}
-    """
-  end
-
-  defp description(challenge_title, url, _) do
-    """
-    Good morning, Code Wizards! Today's challenge is ready for you.
-
-    Challenge Title: **[#{challenge_title}](#{url})**
-
-    And here's a Christmas tree to get you in the spirit:
-
-    ```ansi
-    #{Commands.ChristmasTree.generate(15)}
-    ```
-    **Random Message of the Day:**
-    > #{Commands.RandomMessage.get_random_message()}
-
-    PS: #{Commands.Countdown.days_until()}
-    """
+      #{Commands.Countdown.days_until()}
+      """)
+    ])
   end
 end
